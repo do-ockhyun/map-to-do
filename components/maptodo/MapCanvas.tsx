@@ -17,6 +17,7 @@ import ReactFlow, {
   BackgroundVariant
 } from "reactflow"
 import "reactflow/dist/style.css"
+import { Button } from "@/components/ui/button"
 
 // 커스텀 MindMapNode 컴포넌트
 function MindMapNode({ data, id, selected }: NodeProps) {
@@ -68,23 +69,21 @@ function MindMapNode({ data, id, selected }: NodeProps) {
 
 const nodeTypes = { mindMapNode: MindMapNode }
 
-const initialNodes: Node[] = [
-  {
-    id: "1",
-    type: "mindMapNode",
-    position: { x: 100, y: 200 },
-    data: { label: "루트 노드", isEditing: false },
-    selected: true
-  }
-]
-const initialEdges: Edge[] = []
+interface MapCanvasProps {
+  nodes: any[]
+  edges: any[]
+  onChange?: (nodes: any[], edges: any[]) => void
+  onRootLabelChange?: (label: string) => void
+}
 
-export default function MapCanvas() {
+export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, onChange, onRootLabelChange }: MapCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [nodeId, setNodeId] = useState(2)
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
   const [showBackground, setShowBackground] = useState(false)
+  const [nodeId, setNodeId] = useState(
+    initialNodes.length > 0 ? Math.max(...initialNodes.map((n: any) => Number(n.id))) + 1 : 2
+  )
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
 
   // 노드 더블클릭 시 편집
   const startEdit = useCallback((id: string) => {
@@ -288,12 +287,38 @@ export default function MapCanvas() {
     setNodes(newNodes)
   }, [nodes, edges, setNodes])
 
+  // 노드/엣지 변경 시 onChange 호출
+  useEffect(() => {
+    if (onChange) onChange(nodes, edges)
+    // 루트노드 텍스트 변경 시 onRootLabelChange 호출
+    if (onRootLabelChange) {
+      const root = nodes.find(n => n.id === "1")
+      if (root && root.data && typeof root.data.label === "string") {
+        onRootLabelChange(root.data.label)
+      }
+    }
+    // eslint-disable-next-line
+  }, [nodes, edges])
+
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div style={{ width: "100%", height: "100%", position: 'relative' }}>
+      {/* 좌측 상단: Node Reorder */}
       <div style={{ position: "absolute", top: 16, left: 16, zIndex: 10, display: 'flex', gap: 8 }}>
-        <button onClick={() => setNodeId(id => id + 1)}>노드 추가</button>
-        <button onClick={handleRearrange}>재정렬</button>
-        <button onClick={() => setShowBackground(v => !v)}>{showBackground ? '점 숨기기' : '점 표시'}</button>
+        <Button
+          onClick={handleRearrange}
+          className="rounded-lg px-5 py-2 font-semibold bg-primary text-white shadow"
+        >
+          Node Reorder
+        </Button>
+      </div>
+      {/* 우측 상단: ToDo Export */}
+      <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
+        <Button
+          onClick={() => alert('ToDo Export 클릭!')}
+          className="rounded-lg px-5 py-2 font-semibold bg-primary text-white shadow"
+        >
+          ToDo Export
+        </Button>
       </div>
       <ReactFlow
         nodes={nodesWithEdit}
