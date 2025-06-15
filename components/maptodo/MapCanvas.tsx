@@ -74,9 +74,10 @@ interface MapCanvasProps {
   edges: any[]
   onChange?: (nodes: any[], edges: any[]) => void
   onRootLabelChange?: (label: string) => void
+  onExportToTodos?: () => void
 }
 
-export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, onChange, onRootLabelChange }: MapCanvasProps) {
+export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, onChange, onRootLabelChange, onExportToTodos }: MapCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
   const [showBackground, setShowBackground] = useState(false)
@@ -314,7 +315,7 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
       {/* 우측 상단: ToDo Export */}
       <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
         <Button
-          onClick={() => alert('ToDo Export 클릭!')}
+          onClick={onExportToTodos}
           className="rounded-lg px-5 py-2 font-semibold bg-primary text-white shadow"
         >
           ToDo Export

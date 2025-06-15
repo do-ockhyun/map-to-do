@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic"
 import React, { useState, useEffect } from "react"
 import MapList, { MapListItem } from "@/components/maptodo/MapList"
+import TodoList, { TodoItem } from "@/components/maptodo/TodoList"
 
 const MapCanvas = dynamic(() => import("@/components/maptodo/MapCanvas"), { ssr: false })
 
@@ -18,6 +19,7 @@ interface MindMap {
 export default function MapTodoPage() {
   const [maps, setMaps] = useState<MindMap[]>([])
   const [currentMapId, setCurrentMapId] = useState<string | null>(null)
+  const [todos, setTodos] = useState<TodoItem[]>([])
 
   // 마운트 시 localStorage에서 maps 불러오기
   useEffect(() => {
@@ -35,6 +37,28 @@ export default function MapTodoPage() {
       localStorage.setItem("maps", JSON.stringify(maps))
     }
   }, [maps])
+
+  // 맵별 ToDo 저장 키
+  function getTodosStorageKey(mapId: string) {
+    return `todos_${mapId}`
+  }
+
+  // 맵 변경 시 해당 맵의 todos 불러오기
+  useEffect(() => {
+    if (!currentMapId) return
+    const saved = localStorage.getItem(getTodosStorageKey(currentMapId))
+    if (saved) {
+      setTodos(JSON.parse(saved))
+    } else {
+      setTodos([])
+    }
+  }, [currentMapId])
+
+  // todos 변경 시 localStorage에 저장
+  useEffect(() => {
+    if (!currentMapId) return
+    localStorage.setItem(getTodosStorageKey(currentMapId), JSON.stringify(todos))
+  }, [todos, currentMapId])
 
   // 맵 생성
   function handleCreateMap() {
@@ -79,6 +103,46 @@ export default function MapTodoPage() {
   // 현재 선택된 맵
   const currentMap = maps.find(m => m.id === currentMapId) || maps[0]
 
+  // ToDo Export: 리프노드 → ToDo 변환 (indent 포함)
+  function handleExportToTodos() {
+    if (!currentMap) return
+    const { nodes, edges } = currentMap
+    const nodeMap = Object.fromEntries(nodes.map((n: any) => [n.id, n]))
+    const childSet = new Set(edges.map((e: any) => e.source))
+    function getLevel(id: string): number {
+      let level = 0
+      let cur = id
+      while (true) {
+        const parentEdge = edges.find((e: any) => e.target === cur)
+        if (!parentEdge) break
+        cur = parentEdge.source
+        level++
+      }
+      return level
+    }
+    const leafNodes = nodes.filter((n: any) => !childSet.has(n.id) && n.id !== "1")
+    const todos: TodoItem[] = leafNodes.map((leaf: any) => {
+      const parentEdge = edges.find((e: any) => e.target === leaf.id)
+      const parent = parentEdge ? nodeMap[parentEdge.source] : null
+      return {
+        id: leaf.id,
+        text: leaf.data.label,
+        group: parent ? parent.data.label : "",
+        done: false,
+        indent: getLevel(leaf.id) - 2 > 0 ? getLevel(leaf.id) - 2 : 0
+      }
+    })
+    setTodos(todos)
+    if (currentMapId) {
+      localStorage.setItem(getTodosStorageKey(currentMapId), JSON.stringify(todos))
+    }
+  }
+
+  // 체크박스 토글 핸들러
+  function handleToggleDone(id: string) {
+    setTodos(todos => todos.map(todo => todo.id === id ? { ...todo, done: !todo.done } : todo))
+  }
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       {/* Left: MapList */}
@@ -90,11 +154,11 @@ export default function MapTodoPage() {
       />
       {/* Center: MapCanvas */}
       <div style={{ flex: 1, background: '#f8fafc' }}>
-        {currentMap && <MapCanvas key={currentMap.id} {...currentMap} onChange={handleMapChange} onRootLabelChange={handleRootLabelChange} />}
+        {currentMap && <MapCanvas key={currentMap.id} {...currentMap} onChange={handleMapChange} onRootLabelChange={handleRootLabelChange} onExportToTodos={handleExportToTodos} />}
       </div>
       {/* Right: TodoList */}
       <div style={{ width: 320, borderLeft: '1px solid #e5e7eb', background: '#fff' }}>
-        {/* TodoList 컴포넌트 자리 */}
+        <TodoList title={currentMap?.title || "ToDo"} todos={todos} onToggleDone={handleToggleDone} />
       </div>
     </div>
   )
