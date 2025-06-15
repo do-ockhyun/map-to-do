@@ -1,4 +1,4 @@
-import MindMapApp from "../mindmap-app"
+import MindMapApp from "@/components/mindmap/MindMapApp"
 
 export default function Page() {
   return (

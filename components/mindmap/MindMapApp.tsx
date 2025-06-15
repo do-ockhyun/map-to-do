@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Download } from "lucide-react"
-import MindMapComponent from "./mindmap"
+import MindMapComponent from "./MindMap"
 
 interface TodoItem {
   id: string

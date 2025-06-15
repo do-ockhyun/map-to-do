@@ -34,3 +34,50 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## 리팩토링 후 폴더 구조 예시
+
+```
+app/
+  mindmap/
+    page.tsx
+  todo/
+    page.tsx
+  layout.tsx
+  globals.css
+
+components/
+  mindmap/
+    MindMap.tsx
+    MindMapNode.tsx
+    MindMapApp.tsx
+  todo/
+    TodoList.tsx
+  ui/
+    button.tsx
+    input.tsx
+    ...
+
+lib/
+  utils.ts
+  api.ts
+
+types/
+  mindmap.ts
+  todo.ts
+
+public/
+  ...
+
+_doc/
+  PRD.md
+  ToDo.md
+  ...
+```
+
+- `app/`: Next.js 페이지 및 레이아웃
+- `components/`: UI 및 도메인별 컴포넌트
+- `lib/`: 유틸리티, API 등 비즈니스 로직
+- `types/`: 타입 정의
+- `public/`: 정적 파일
+- `_doc/`: 문서 및 참고자료
