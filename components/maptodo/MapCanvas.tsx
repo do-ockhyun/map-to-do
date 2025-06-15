@@ -5,7 +5,6 @@ import ReactFlow, {
   addEdge,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   type Node,
@@ -70,9 +69,9 @@ function MindMapNode({ data, id, selected }: NodeProps) {
 const nodeTypes = { mindMapNode: MindMapNode }
 
 interface MapCanvasProps {
-  nodes: any[]
-  edges: any[]
-  onChange?: (nodes: any[], edges: any[]) => void
+  nodes: Node[]
+  edges: Edge[]
+  onChange?: (nodes: Node[], edges: Edge[]) => void
   onRootLabelChange?: (label: string) => void
   onExportToTodos?: () => void
 }
@@ -80,9 +79,9 @@ interface MapCanvasProps {
 export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, onChange, onRootLabelChange, onExportToTodos }: MapCanvasProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
-  const [showBackground, setShowBackground] = useState(false)
+  const [showBackground] = useState(false)
   const [nodeId, setNodeId] = useState(
-    initialNodes.length > 0 ? Math.max(...initialNodes.map((n: any) => Number(n.id))) + 1 : 2
+    initialNodes.length > 0 ? Math.max(...initialNodes.map((n) => Number(n.id))) + 1 : 2
   )
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null)
 
@@ -249,8 +248,6 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
 
   // 재정렬 버튼 클릭 시 노드 위치 재배치 (왼→오, 위→아래, 부모는 자식의 중간)
   const handleRearrange = useCallback(() => {
-    // 트리 구조를 가정하고, 루트에서부터 BFS로 레벨별로 배치
-    const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]))
     const childrenMap: { [key: string]: string[] } = {}
     edges.forEach(e => {
       if (!childrenMap[e.source]) childrenMap[e.source] = []
@@ -259,25 +256,21 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
     const rootId = "1"
     const levelGapX = 200
     const nodeGapY = 80
-    let positions: { [id: string]: { x: number, y: number } } = {}
-    // 1. 트리 구조를 DFS로 순회하며 각 노드의 위치 계산
+    const positions: { [id: string]: { x: number, y: number } } = {}
     function layoutNode(id: string, level: number, yStart: number): number {
       const children = childrenMap[id] || []
-      let y = yStart
+      const y = yStart
       if (children.length === 0) {
-        // 리프노드: 위치 지정 후 y 증가
         positions[id] = { x: 100 + level * levelGapX, y }
         return y + nodeGapY
       } else {
-        // 자식들 먼저 배치
-        let childYs: number[] = []
+        const childYs: number[] = []
         let nextY = y
         children.forEach(childId => {
           const childY = layoutNode(childId, level + 1, nextY)
           childYs.push((nextY + childY - nodeGapY) / 2)
           nextY = childY
         })
-        // 부모는 자식들의 중간에 위치
         const midY = (Math.min(...childYs) + Math.max(...childYs)) / 2
         positions[id] = { x: 100 + level * levelGapX, y: midY }
         return nextY

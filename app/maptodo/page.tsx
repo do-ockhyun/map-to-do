@@ -2,8 +2,9 @@
 
 import dynamic from "next/dynamic"
 import React, { useState, useEffect } from "react"
-import MapList, { MapListItem } from "@/components/maptodo/MapList"
+import MapList from "@/components/maptodo/MapList"
 import TodoList, { TodoItem } from "@/components/maptodo/TodoList"
+import { Node, Edge } from "reactflow"
 
 const MapCanvas = dynamic(() => import("@/components/maptodo/MapCanvas"), { ssr: false })
 
@@ -11,8 +12,8 @@ const MapCanvas = dynamic(() => import("@/components/maptodo/MapCanvas"), { ssr:
 interface MindMap {
   id: string
   title: string
-  nodes: any[]
-  edges: any[]
+  nodes: Node[]
+  edges: Edge[]
   createdAt: string
 }
 
@@ -87,7 +88,7 @@ export default function MapTodoPage() {
   }
 
   // MapCanvas에서 노드/엣지 변경 시 maps 상태에 반영
-  function handleMapChange(nodes: any[], edges: any[]) {
+  function handleMapChange(nodes: Node[], edges: Edge[]) {
     setMaps(prev => prev.map(m =>
       m.id === currentMapId ? { ...m, nodes, edges } : m
     ))
@@ -107,27 +108,27 @@ export default function MapTodoPage() {
   function handleExportToTodos() {
     if (!currentMap) return
     const { nodes, edges } = currentMap
-    const nodeMap = Object.fromEntries(nodes.map((n: any) => [n.id, n]))
-    const childSet = new Set(edges.map((e: any) => e.source))
+    const nodeMap: Record<string, Node> = Object.fromEntries(nodes.map((n) => [n.id, n]))
+    const childSet = new Set(edges.map((e) => e.source))
     function getLevel(id: string): number {
       let level = 0
       let cur = id
       while (true) {
-        const parentEdge = edges.find((e: any) => e.target === cur)
+        const parentEdge = edges.find((e) => e.target === cur)
         if (!parentEdge) break
         cur = parentEdge.source
         level++
       }
       return level
     }
-    const leafNodes = nodes.filter((n: any) => !childSet.has(n.id) && n.id !== "1")
-    const todos: TodoItem[] = leafNodes.map((leaf: any) => {
-      const parentEdge = edges.find((e: any) => e.target === leaf.id)
+    const leafNodes = nodes.filter((n) => !childSet.has(n.id) && n.id !== "1")
+    const todos: TodoItem[] = leafNodes.map((leaf) => {
+      const parentEdge = edges.find((e) => e.target === leaf.id)
       const parent = parentEdge ? nodeMap[parentEdge.source] : null
       return {
         id: leaf.id,
-        text: leaf.data.label,
-        group: parent ? parent.data.label : "",
+        text: (leaf.data as { label: string }).label,
+        group: parent ? (parent.data as { label: string }).label : "",
         done: false,
         indent: getLevel(leaf.id) - 2 > 0 ? getLevel(leaf.id) - 2 : 0
       }
