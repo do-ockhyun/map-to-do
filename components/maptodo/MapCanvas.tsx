@@ -306,8 +306,9 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
       {/* 좌측 상단: Node Reorder */}
       <div style={{ position: "absolute", top: 16, left: 16, zIndex: 10, display: 'flex', gap: 8 }}>
         <Button
+          variant="outline"
           onClick={handleRearrange}
-          className="rounded-lg px-5 py-2 font-semibold bg-primary text-white shadow"
+          className="rounded-lg px-5 py-2 font-semibold shadow"
         >
           Node Reorder
         </Button>
@@ -315,8 +316,9 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
       {/* 우측 상단: ToDo Export */}
       <div style={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
         <Button
+          variant="destructive"
           onClick={onExportToTodos}
-          className="rounded-lg px-5 py-2 font-semibold bg-primary text-white shadow"
+          className="rounded-lg px-5 py-2 font-semibold shadow"
         >
           ToDo Export
         </Button>
@@ -329,10 +331,9 @@ export default function MapCanvas({ nodes: initialNodes, edges: initialEdges, on
         onConnect={(params: Edge | Connection) => setEdges(eds => addEdge(params, eds))}
         nodeTypes={nodeTypes}
         fitView
-        defaultViewport={{ x: 0, y: 0, zoom: 0.5 }}
+        defaultViewport={{ x: 0, y: 0, zoom: 0.3 }}
       >
         {showBackground && <Background variant={BackgroundVariant.Dots} gap={16} size={1} />}
-        <MiniMap />
         <Controls />
       </ReactFlow>
     </div>
