@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Download } from "lucide-react"
 import MindMapComponent from "./MindMap"
+import MindMapSidebar from "./MindMapSidebar"
+import MindMapCanvas from "./MindMapCanvas"
+import MindMapTodoPanel from "./MindMapTodoPanel"
 
 interface TodoItem {
   id: string
@@ -145,45 +148,13 @@ export default function MindMapApp() {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Left Panel - Map List */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <Button onClick={createNewMap} className="w-full flex items-center gap-2">
-            <Plus className="w-4 h-4" />New Map
-          </Button>
-        </div>
+      <MindMapSidebar
+        mindMaps={mindMaps}
+        currentMapId={currentMapId}
+        onSelectMap={selectMap}
+        onCreateMap={createNewMap}
+      />
 
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">마인드맵 목록</h3>
-            <div className="space-y-2">
-              {mindMaps.map((map) => (
-                <button
-                  key={map.id}
-                  onClick={() => selectMap(map.id)}
-                  className={`w-full text-left p-3 rounded-lg border transition-colors ${
-                    currentMapId === map.id
-                      ? "bg-blue-50 border-blue-200 text-blue-900"
-                      : "bg-gray-50 border-gray-200 hover:bg-gray-100"
-                  }`}
-                >
-                  <div className="font-medium text-sm">{map.title}</div>
-                  <div className="text-xs text-gray-500 mt-1">{new Date(map.createdAt).toLocaleDateString()}</div>
-                </button>
-              ))}
-
-              {mindMaps.length === 0 && (
-                <div className="text-center text-gray-500 text-sm py-8">
-                  마인드맵이 없습니다.
-                  <br />새 맵을 생성해보세요!
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Center Panel - Mind Map */}
       <div className="flex-1 relative">
         <div className="absolute top-4 right-4 z-10">
           <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
@@ -201,83 +172,21 @@ export default function MindMapApp() {
             </DialogContent>
           </Dialog>
         </div>
-
-        {currentMapId ? (
-          <MindMapComponent
-            nodes={mindMaps.find((m) => m.id === currentMapId)?.nodes || []}
-            edges={mindMaps.find((m) => m.id === currentMapId)?.edges || []}
-            onChange={handleMapChange}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-gray-500">
-              <div className="text-lg font-medium mb-2">마인드맵을 선택하세요</div>
-              <div className="text-sm">왼쪽에서 기존 맵을 선택하거나 새 맵을 생성하세요</div>
-            </div>
-          </div>
-        )}
+        <MindMapCanvas
+          nodes={mindMaps.find((m) => m.id === currentMapId)?.nodes || []}
+          edges={mindMaps.find((m) => m.id === currentMapId)?.edges || []}
+          onChange={handleMapChange}
+          isEmpty={!currentMapId}
+        />
       </div>
-
-      {/* Right Panel - Todo List */}
-      <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold text-gray-900">ToDos</h2>
-          </div>
-
-          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="group">그룹별 정렬</SelectItem>
-              <SelectItem value="priority">우선순위별 정렬</SelectItem>
-              <SelectItem value="urgency">긴급도별 정렬</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            {Object.keys(groupedTodos).length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-8">
-                Todo 항목이 없습니다.
-                <br />
-                마인드맵에서 내보내기를 해보세요!
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {Object.entries(groupedTodos).map(([groupName, groupTodos]) => (
-                  <div key={groupName}>
-                    <h3 className="text-sm font-medium text-gray-700 mb-2">{groupName}</h3>
-                    <div className="space-y-2">
-                      {groupTodos.map((todo) => (
-                        <div key={todo.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                          <div className="font-medium text-sm text-gray-900 mb-1">{todo.text}</div>
-                          <div className="flex gap-4 text-xs text-gray-600">
-                            <span className="flex items-center gap-1">
-                              <span className="font-medium">우선순위:</span>
-                              <span className={`px-1.5 py-0.5 rounded ${getPriorityColor(todo.priority)}`}>
-                                {todo.priority}
-                              </span>
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <span className="font-medium">긴급도:</span>
-                              <span className={`px-1.5 py-0.5 rounded ${getUrgencyColor(todo.urgency)}`}>
-                                {todo.urgency}
-                              </span>
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      
+      <MindMapTodoPanel
+        groupedTodos={groupedTodos}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        getPriorityColor={getPriorityColor}
+        getUrgencyColor={getUrgencyColor}
+      />
     </div>
   )
 }
